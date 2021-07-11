@@ -30,7 +30,7 @@ void lsb_print(uint32_t* list, unsigned size)
 }
 
 void lsb_sort(unsigned size, int id, int N, unsigned** cnt, uint32_t** lists, HANDLE done, ULONG& counter) {
-	//SetThreadAffinityMask(GetCurrentThread(), 1 << (id * 2));
+	SetThreadAffinityMask(GetCurrentThread(), 1 << (id * 2));
 
 	int start = floor((double)id / N * size);
 	int end = floor((double)(id + 1) / N * size) - 1;
@@ -73,20 +73,43 @@ void lsb_sort(unsigned size, int id, int N, unsigned** cnt, uint32_t** lists, HA
 
 	WaitForSingleObject(done, INFINITE);
 
-	idx[0][0] = 0;
+	// v1 
+	/*idx[0][0] = 0;
 	idx[1][0] = 0;
 	idx[2][0] = 0;
 	idx[3][0] = 0;
 
-	//cumulates loop
 	for (int digit = 0; digit < 4; digit++)
 	{
 		for (int k = 1; k < 256; k++)
 		{
 			idx[digit][k] = idx[digit][k - 1] + cnt[id][digit*256 + k - 1];
 		}
-	}
+	}*/
 
+	// v2
+	for (int digit = 0; digit < 4; digit++)
+	{
+		int sum = 0;
+		for (int i = 0; i < 256; i++)
+		{
+			if (i == 0)
+			{
+				sum = 0;
+			}
+			else
+			{
+				sum = idx[digit][i - 1];
+				for (int thrd = id; thrd < N; thrd++)
+					sum += cnt[thrd][digit * 256 + i - 1];
+			}
+			for (int thrd = 0; thrd < id; thrd++)
+				sum += cnt[thrd][digit * 256 + i];
+
+			idx[digit][i] = sum;
+		}
+	}
+	
 	//distribution loop
 	for (int digit = 0; digit < 4; digit++)
 	{
@@ -97,14 +120,14 @@ void lsb_sort(unsigned size, int id, int N, unsigned** cnt, uint32_t** lists, HA
 		for (int i = start; i <= end; i++)
 		{
 			UCHAR* p = (UCHAR*)(input + i);
-			output[idx[digit][p[digit]]++] = input[i];
+			output[idx[digit][*(p + digit)]++] = input[i];
 		}
 	}
 }
 
 int main() {
 	int sz = 1 << 27;
-	const int N = 4;
+	const int N = 3;
 
 	uint32_t* data = new uint32_t[sz];
 	create_arr(data, sz);
