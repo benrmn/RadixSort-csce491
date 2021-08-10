@@ -1,16 +1,16 @@
 #include "stdafx.h"
 #include "LSD.h"
 
-void LSD::Reset(void) {
+void LSD::Reset() {
 	memset(this->cnt, 0, 256 * sizeof(int));
 
 	// reset buckets to beginning so that another iteration can be started 
 	memcpy(pNext0, buckets0, sizeof(uint32_t*) * 256);
 	memcpy(pNext1, buckets1, sizeof(uint32_t*) * 256);
 	memset(tmpBucketSize, 0, sizeof(tmpBucketSize[0]) * 256);
-	
+
 	// perform StreamPool/VortexS resets 
-	for (uint64_t i = 0; i < 256 * 2; i++)
+	for (uint64_t i = 0; i < 512; i++)
 		streams[i]->Reset();
 	sp->Reset();
 }
@@ -20,6 +20,7 @@ LSD::LSD(uint64_t sz)
 {
 	this->sz = sz;
 	this->list = new uint32_t[sz]; 
+
 	memset(this->cnt, 0, 256 * sizeof(int));
 
 	int chunkSize = 1 << 27;
@@ -46,15 +47,10 @@ LSD::LSD(uint64_t sz)
 
 LSD::~LSD()
 {
-	for (int i = 0; i < 256 * 2; i++) delete streams[i];
-	delete[] list;
+	for (int i = 0; i < 512; i++) delete streams[i];
+	_aligned_free(tmpBucketSize);
+	_aligned_free(tmpBuckets);
 	delete sp;
-	delete tmpBucketSize;
-	delete tmpBuckets;
-	delete[] buckets0;
-	delete[] pNext0;
-	delete[] buckets1;
-	delete[] pNext1;
 }
 
 void LSD::Create()
@@ -67,7 +63,7 @@ void LSD::Create()
 	}
 }
 
-void LSD::WC(uint32_t* buf, int size, int digit, uint32_t** pNext) {
+void LSD::WC(uint32_t* buf, uint64_t size, int digit, uint32_t** pNext) {
 	short* localSize = tmpBucketSize;
 	uint32_t* localBuckets = tmpBuckets;
 	uint64_t   avx_div = sizeof(__m256i) / sizeof(uint32_t);
