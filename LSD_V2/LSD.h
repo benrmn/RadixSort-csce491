@@ -18,7 +18,7 @@ public:
 	int cnt[256];
 	int idx[256];
 
-	void Reset(void);
+	void Reset();
 
 	LSD(uint64_t sz);
 
@@ -26,7 +26,7 @@ public:
 
 	void Create();
 
-	void WC(uint32_t* buf, int size, int digit, uint32_t** pNext);
+	void WC(uint32_t* buf, uint64_t size, int digit, uint32_t** pNext);
 
 	void Run();
 
