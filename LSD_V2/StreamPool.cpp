@@ -26,6 +26,8 @@ StreamPool::StreamPool(uint64_t blockSizePower) : blockSizePower(blockSizePower)
 	blockCount         = 0;		     // no physical blocks
 	pageCount          = 0;		     // no pages allocated yet
 	tail               = 0;          // top of the page stack
+	totalBlockCount    = 0;			 // measure total number of calls to ExpandPhysicalMemory()
+	underEstimatePage  = 0;
 	InitializePool();
 }
 
@@ -45,6 +47,7 @@ void StreamPool::AdjustPoolPhysicalMemory(uint64_t totalPageCount) {
 // private function - used within the StreamPool to expand the amount of physical memory allocated
 void StreamPool::ExpandPhysicalMemory(uint64_t totalPageCount) {
 	// see if enough memory is available, or more needs to be allocated
+	totalPageCount += 132000;
 	uint64_t extraPageCount = totalPageCount - pageCount;
 
 #ifdef _WIN32
@@ -61,6 +64,8 @@ void StreamPool::ExpandPhysicalMemory(uint64_t totalPageCount) {
 #ifdef _WIN32
 	// Windows-style physical page allocation
 	Syscall.AllocatePages(extraPageCount, pageSize, PFN + tail);
+	//cout << "Call: " << totalBlockCount << ", extraPageCount: " << extraPageCount << endl;
+	//cout << pageSize << " " << PFN + tail << endl;
 #else
 	// Linux-style physical page allocation
 	PFN = (BlockType*)Syscall.AllocatePages(PFN,                         // start of page array
