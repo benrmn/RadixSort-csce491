@@ -145,42 +145,34 @@ void LSD::Run()
 
 	// digit 1
 	for (int i = 0; i < 256; i++)
-	{
 		WC(buckets0[i], pNext0[i] - buckets0[i], 1, (uint32_t**)pNext1);
-	}
+	
 	Offload(pNext1);
 	memset(tmpBucketSize, 0, sizeof(tmpBucketSize[0]) * 256);
 	memcpy(pNext0, buckets0, sizeof(uint32_t*) * 256);
 
 	// digit 2
 	for (int i = 0; i < 256; i++)
-	{
 		WC(buckets1[i], pNext1[i] - buckets1[i], 2, (uint32_t**)pNext0);
-	}
+	
 	Offload(pNext0);
 	
 	// digit 3
 	MakeIdx();
 	for (int i = 0; i < 256; i++)
-	{
 		Scalar(buckets0[i], pNext0[i] - buckets0[i]);
-	}
 }
 
 void LSD::Test()
 {
-	for (uint64_t i = 0; i < sz - 1; i++)
-	{
+	for (uint64_t i = 0; i < sz - 1; i++) 
 		assert(this->list[i] <= this->list[i + 1]);
-	}
 }
 
 void LSD::Print()
 {
-	for (uint64_t i = 0; i < sz; i++)
-	{
+	for (uint64_t i = 0; i < sz; i++) 
 		cout << list[i] << " ";
-	}
 }
 
 void __forceinline LSD::Copy(uint32_t* dst, uint32_t* src, uint64_t size) {
